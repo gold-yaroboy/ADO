@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="ADO/ADO.csproj" Id="3efabdcb-8a1f-437f-8f07-fe774681a19c" />
+  <Project Path="DBtools/DBtools.csproj" Id="db3969e0-f956-48aa-8210-984ab6616e41" />
+  <Project Path="DLLtest/DLLtest.csproj" Id="e44c776f-ab5c-4a8c-9a9b-b2a6da7c0f7b" />
 </Solution>
