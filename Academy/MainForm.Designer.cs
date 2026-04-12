@@ -36,6 +36,8 @@
 			dgvDirections = new DataGridView();
 			tabPageDisciplines = new TabPage();
 			tabPageTechers = new TabPage();
+			toolStripStatusLabel = new ToolStripStatusLabel();
+			statusStrip.SuspendLayout();
 			tabControl.SuspendLayout();
 			tabPageDirections.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgvDirections).BeginInit();
@@ -43,6 +45,7 @@
 			// 
 			// statusStrip
 			// 
+			statusStrip.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel });
 			statusStrip.Location = new Point(0, 428);
 			statusStrip.Name = "statusStrip";
 			statusStrip.Size = new Size(800, 22);
@@ -124,6 +127,12 @@
 			tabPageTechers.Text = "Teachers";
 			tabPageTechers.UseVisualStyleBackColor = true;
 			// 
+			// toolStripStatusLabel
+			// 
+			toolStripStatusLabel.Name = "toolStripStatusLabel";
+			toolStripStatusLabel.Size = new Size(118, 17);
+			toolStripStatusLabel.Text = "toolStripStatusLabel1";
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
@@ -133,6 +142,8 @@
 			Controls.Add(statusStrip);
 			Name = "MainForm";
 			Text = "Academy PV_521";
+			statusStrip.ResumeLayout(false);
+			statusStrip.PerformLayout();
 			tabControl.ResumeLayout(false);
 			tabPageDirections.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)dgvDirections).EndInit();
@@ -150,5 +161,6 @@
 		private TabPage tabPageDisciplines;
 		private DataGridView dgvDirections;
 		private TabPage tabPageTechers;
+		private ToolStripStatusLabel toolStripStatusLabel;
 	}
 }
