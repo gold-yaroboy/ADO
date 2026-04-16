@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data.SqlClient;
+
 using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.IO;
 
 namespace DBtools
 {
@@ -12,6 +15,7 @@ namespace DBtools
 	{
 		string connection_string;
 		SqlConnection connection;
+
 		public Connector(string connection_string)
 		{
 			Console.WriteLine(connection_string);
@@ -30,9 +34,7 @@ namespace DBtools
 				Console.Write(reader.GetName(i) + "\t");
 				table.Columns.Add(reader.GetName(i));
 			}
-
 			Console.WriteLine();
-
 			while (reader.Read())
 			{
 				DataRow row = table.NewRow();
@@ -56,13 +58,30 @@ namespace DBtools
 			cmd += ";";
 			return Select(cmd);
 		}
+		public Dictionary<string, int> GetDictionary(string table, string condition = "")
+		{
+			Dictionary<string, int> dictionary = new Dictionary<string, int>();
+			string cmd =
+$"SELECT {table.Substring(0, table.Length - 1)}_name,{table.Substring(0, table.Length - 1)}_id FROM {table}";
+			if (condition != "") cmd += $" WHERE {condition}";
+			SqlCommand command = new SqlCommand(cmd, connection);
+			connection.Open();
+			SqlDataReader reader = command.ExecuteReader();
+			while (reader.Read())
+			{
+				dictionary.Add(reader[0].ToString(), Convert.ToInt32(reader[1]));
+			}
+			reader.Close();
+			connection.Close();
+			return dictionary;
+		}
 		public object Scalar(string cmd)
 		{
 			object result = null;
 			connection.Open();
 
 			SqlCommand command = new SqlCommand(cmd, connection);
-			result = command.ExecuteScalar();
+			result = command.ExecuteScalar();   //Выполнение скалярного запроса.
 
 			connection.Close();
 			return result;
@@ -84,14 +103,17 @@ namespace DBtools
 		}
 		public string GetPrimaryKeyColumnName(string table)
 		{
-			string cmd = $@"SELECT INFORMATION_SCHEMA.KEY_COLUMN_USAGE.COLUMN_NAME
-						 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-						 WHERE TABLE_NAME = N'{table}'
-						 AND CONSTRAINT_NAME LIKE N'PK_%'";
+			string raw = @"RAW string"; //RAW-строка игнорирует переносы
+			string cmd = $@"SELECT	INFORMATION_SCHEMA.KEY_COLUMN_USAGE.COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE   TABLE_NAME = N'{table}'
+AND CONSTRAINT_NAME LIKE N'PK_%'";
 			return (string)Scalar(cmd);
 		}
+
 		public void Insert(string cmd)
 		{
+			int id = 0;
 			SqlCommand command = new SqlCommand(cmd, connection);
 			connection.Open();
 			try
@@ -114,20 +136,60 @@ namespace DBtools
 			string condition = "";
 			string[] s_fields = fields.Split(',');
 			string[] s_values = values.Split(',');
-			string parsed_values = $"N'{s_values[0]}',";
-			for (int i = 1; i < s_fields.Length; i++)
+			string parsed_fields = "";
+			string parsed_values = "";// $"N'{s_values[0]}',";
+			for (int i = s_fields[0].Contains("_id") ? 1 : 0; i < s_fields.Length; i++)
 			{
+				if (s_values[i] == "") continue;
 				condition += $" {s_fields[i]}=N'{s_values[i]}' ";
-				parsed_values += s_values[i][0] != 'N' && s_values[i][1] != '\'' ? $"N'{s_values[i]}'" : s_values[i];
+				parsed_fields += s_fields[i];
+				if (i != s_fields.Length - 1) parsed_fields += ",";
+				parsed_values += s_values[i][0] != 'N' && s_values[i].Length > 1 && s_values[i][1] != '\'' ? $"N'{s_values[i]}'" : s_values[i];
 				if (i != s_fields.Length - 1)
 				{
 					condition += "AND";
 					parsed_values += ",";
 				}
+
 			}
 			string cmd = $"IF NOT EXISTS (SELECT {GetPrimaryKeyColumnName(table)} FROM {table} WHERE {condition})";
-			cmd += $"INSERT {table}({fields}) VALUES ({parsed_values})";
+			cmd += $"INSERT {table}({parsed_fields}) VALUES ({parsed_values})";
 			Insert(cmd);
+		}
+		public void Update(string cmd)
+		{
+			SqlCommand command = new SqlCommand(cmd, connection);
+			connection.Open();
+			command.ExecuteNonQuery();
+			connection.Close();
+		}
+		public void UploadPhoto(byte[] image, int id, string field, string table)
+		{
+			string cmd = $"UPDATE {table} SET {field}=@image WHERE {GetPrimaryKeyColumnName(table)}={id}";
+			SqlCommand command = new SqlCommand(cmd, connection);
+			command.Parameters.Add("@image", SqlDbType.VarBinary).Value = image;
+			connection.Open();
+			command.ExecuteNonQuery();
+			connection.Close();
+		}
+		public Image DownloadPhoto(string table, string field, int id)
+		{
+			Image photo = null;
+			string cmd = $"SELECT {field} FROM {table} WHERE {GetPrimaryKeyColumnName(table)}={id}";
+			SqlCommand command = new SqlCommand(cmd, connection);
+			connection.Open();
+			SqlDataReader reader = command.ExecuteReader();
+			if (reader.Read())
+			{
+				byte[] data = reader[0] as byte[];
+				if (data != null)
+				{
+					MemoryStream ms = new MemoryStream(data);
+					photo = Image.FromStream(ms); 
+				}
+			}
+			connection.Close();
+			return photo;
 		}
 	}
 }
