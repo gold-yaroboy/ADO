@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
+using System.Configuration;
 
 namespace Academy
 {
@@ -40,7 +39,7 @@ namespace Academy
 		{
 			human = new Models.Human
 				(
-				labelID.Text == "" ? 0 : Convert.ToInt32(labelID.Text.Split(':').Last()),
+				labelID.Text=="" ? 0 : Convert.ToInt32(labelID.Text.Split(':').Last()),
 				tbLastName.Text,
 				tbFirstName.Text,
 				tbMiddleName.Text,
@@ -54,7 +53,7 @@ namespace Academy
 		private void buttonBrowse_Click(object sender, EventArgs e)
 		{
 			OpenFileDialog dialog = new OpenFileDialog();
-			dialog.Filter =
+			dialog.Filter = 
 				"JPG files (*.jpg)|*.jpg|PNG files (*.png)|*.png|All image files|*.png;*.jpg|All files (*.*)|*.*";
 			if (dialog.ShowDialog() == DialogResult.OK)
 				pbPhoto.Image = Image.FromFile(dialog.FileName);
