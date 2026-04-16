@@ -1,21 +1,23 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using System.Data.SqlClient;
 
-namespace ADO
+namespace PV_521_ADO
 {
-	internal class Connector
+	class Connector
 	{
 		string connection_string;
 		SqlConnection connection;
+
 		public Connector(string connection_string)
 		{
 			Console.WriteLine(connection_string);
 			this.connection_string = connection_string;
-			connection = new SqlConnection (connection_string);
+			connection = new SqlConnection(connection_string);
 		}
 		public void Select(string cmd)
 		{
@@ -25,21 +27,18 @@ namespace ADO
 			SqlDataReader reader = command.ExecuteReader();
 			for (int i = 0; i < reader.FieldCount; i++)
 				Console.Write(reader.GetName(i) + "\t");
-
 			Console.WriteLine();
-
 			while (reader.Read())
 			{
 				//Console.WriteLine($"{reader[0]}\t{reader[1]}\t{reader[2]}\t{reader[3]}");
 				for (int i = 0; i < reader.FieldCount; i++)
 					Console.Write($"{reader[i]}\t\t");
-
 				Console.WriteLine();
 			}
 			reader.Close();
 			connection.Close();
 		}
-		public void Select(string fields, string tables, string condition ="")
+		public void Select(string fields, string tables, string condition = "")
 		{
 			string cmd = $"SELECT {fields} FROM {tables}";
 			if (condition != "") cmd += $" WHERE {condition}";
@@ -52,7 +51,7 @@ namespace ADO
 			connection.Open();
 
 			SqlCommand command = new SqlCommand(cmd, connection);
-			result = command.ExecuteScalar();
+			result = command.ExecuteScalar();   //Выполнение скалярного запроса.
 
 			connection.Close();
 			return result;
@@ -70,19 +69,21 @@ namespace ADO
 		}
 		public int GetNextPrimaryKey(string table)
 		{
-			return GetMaxPrimaryKey(table)+1;
+			return GetMaxPrimaryKey(table) + 1;
 		}
 		public string GetPrimaryKeyColumnName(string table)
 		{
-			string cmd = $@"SELECT INFORMATION_SCHEMA.KEY_COLUMN_USAGE.COLUMN_NAME
-						 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-						 WHERE TABLE_NAME = N'{table}'
-						 AND CONSTRAINT_NAME LIKE N'PK_%'";
+			string raw =  @"RAW string";	//RAW-строка игнорирует переносы
+			string cmd = $@"SELECT	INFORMATION_SCHEMA.KEY_COLUMN_USAGE.COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE   TABLE_NAME = N'{table}'
+AND CONSTRAINT_NAME LIKE N'PK_%'";
 			return (string)Scalar(cmd);
 		}
+
 		public void Insert(string cmd)
 		{
-			SqlCommand command = new SqlCommand (cmd, connection);
+			SqlCommand command = new SqlCommand(cmd, connection);
 			connection.Open();
 			try
 			{
@@ -114,6 +115,7 @@ namespace ADO
 					condition += "AND";
 					parsed_values += ",";
 				}
+				
 			}
 			string cmd = $"IF NOT EXISTS (SELECT {GetPrimaryKeyColumnName(table)} FROM {table} WHERE {condition})";
 			cmd += $"INSERT {table}({fields}) VALUES ({parsed_values})";
